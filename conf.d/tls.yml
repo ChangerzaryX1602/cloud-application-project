@@ -1,0 +1,4 @@
+tls:
+  certificates:
+    - certFile: /etc/traefik/tls/mysterchat.crt
+      keyFile: /etc/traefik/tls/mysterchat.key

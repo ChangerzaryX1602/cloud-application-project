@@ -1,0 +1,210 @@
+networks:
+  traefik:
+    external: true
+    name: traefik
+
+services: 
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/conf.d
+      - --providers.file.watch=true
+      - --entrypoints.prd.address=:443
+      - --entrypoints.prd.http.tls=true
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=chatchanan.pa@kkumail.com
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "443:443"
+      - "8080:8080"
+      # - "3000:3000"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik/letsencrypt:/letsencrypt
+      - ./ssl_san:/etc/traefik/tls:ro
+      - "./conf.d:/etc/traefik/conf.d:ro"
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: cloud-project-postgres
+    environment:
+      POSTGRES_DB: cloud_project_postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "ChangeMe123!"
+      TZ: Asia/Bangkok
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    ports:
+      - "15432:5432"
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  # cloud-project-services:
+  #   image: registry.zercle.tech/kku/cloud-project-services:latest
+  #   container_name: cloud-project-services
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.cloud-project-services.rule=Host(`cloud-application-project.mysterchat.com`) && PathPrefix(`/api/`)
+  #     - traefik.http.routers.cloud-project-services.entrypoints=prd
+  #     - traefik.http.services.cloud-project-services.loadbalancer.server.port=8080
+  #     - traefik.http.routers.cloud-project-services.middlewares=sec-headers-backend
+  #     - traefik.http.middlewares.sec-headers-backend.headers.stsSeconds=31536000
+  #     - traefik.http.middlewares.sec-headers-backend.headers.accessControlAllowHeaders=Origin,Content-Type,Accept,Authorization,X-Requested-With
+  #     - traefik.http.middlewares.sec-headers-backend.headers.accessControlAllowOriginList=https://cloud-application-project.mysterchat.com
+  #     - traefik.http.middlewares.sec-headers-backend.headers.accessControlAllowMethods=GET,POST,PUT,PATCH,DELETE,OPTIONS
+  #   volumes:
+  #     - ./configs:/app/configs
+  #     - ./data/log:/app/log
+  #     - ./assets:/app/internal/assets
+  #     - ./data/uploads:/app/uploads
+  #   command: ["--env=prd"]
+  #   networks:
+  #     - traefik
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - postgres
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    container_name: zitadel
+    command: 'start-from-init --masterkey "p70uG3dme5uVk5Yv6CeBJVYuSlmxT92w" --tlsMode external'
+    environment:
+      - ZITADEL_DATABASE_POSTGRES_HOST=cloud-project-postgres
+      - ZITADEL_DATABASE_POSTGRES_PORT=5432
+      - ZITADEL_DATABASE_POSTGRES_DATABASE=zitadel
+      - ZITADEL_DATABASE_POSTGRES_USER_USERNAME=zitadel
+      - ZITADEL_DATABASE_POSTGRES_USER_PASSWORD=ChangeMe123!
+      - ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME=postgres
+      - ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD=ChangeMe123!
+      - ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE=disable
+      - ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE=disable
+      - ZITADEL_EXTERNALDOMAIN=sso.mysterchat.com
+      - ZITADEL_EXTERNALPORT=443
+      - ZITADEL_EXTERNALSECURE=true
+      - ZITADEL_TLS_ENABLED=false
+      - ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH=/current-dir/login-client.pat
+      - ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED=false
+      - ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME=login-client
+      - ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME=Automatically Initialized IAM_LOGIN_CLIENT
+      - ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE=2029-01-01T00:00:00Z
+      - ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED=true
+      - ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI=https://sso.mysterchat.com/ui/v2/login
+      - ZITADEL_OIDC_DEFAULTLOGINURLV2=https://sso.mysterchat.com/ui/v2/login/login?authRequest=
+      - ZITADEL_OIDC_DEFAULTLOGOUTURLV2=https://sso.mysterchat.com/ui/v2/login/logout?post_logout_redirect=
+      - ZITADEL_SAML_DEFAULTLOGINURLV2=https://sso.mysterchat.com/ui/v2/login/login?samlRequest=
+    user: "0"
+    volumes:
+      - ./data/zitadel:/current-dir:delegated
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zitadel.rule=Host(`sso.mysterchat.com`) && !PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.zitadel.entrypoints=prd"
+      - "traefik.http.routers.zitadel.tls=true"
+      - "traefik.http.routers.zitadel.tls.certresolver=myresolver"
+      - "traefik.http.routers.zitadel.middlewares=zitadel-headers"
+      - "traefik.http.middlewares.zitadel-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.services.zitadel.loadbalancer.server.port=8080"
+      - "traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"
+    restart: unless-stopped
+
+  login:
+    restart: unless-stopped
+    image: ghcr.io/zitadel/zitadel-login:latest
+    environment:
+      - ZITADEL_API_URL=http://zitadel:8080
+      - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
+      - CUSTOM_REQUEST_HEADERS=Host:sso.mysterchat.com
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zitadel-v2.rule=Host(`sso.mysterchat.com`) && PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.zitadel-v2.priority=100"
+      - "traefik.http.routers.zitadel-v2.entrypoints=prd"
+      - "traefik.http.routers.zitadel-v2.tls=true"
+      - "traefik.http.routers.zitadel-v2.tls.certresolver=myresolver"
+      - "traefik.http.routers.zitadel-v2.middlewares=zitadel-headers"
+      - "traefik.http.services.zitadel-v2.loadbalancer.server.port=3000"
+      - "traefik.http.services.zitadel-v2.loadbalancer.server.scheme=http"
+    user: "0"
+    volumes:
+      - ./data/zitadel:/current-dir:ro
+    depends_on:
+      zitadel:
+        condition: service_healthy
+        restart: false
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    volumes:
+      - ./data/jenkins:/var/jenkins_home
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jenkins.rule=Host(`ci.mysterchat.com`)"
+      - "traefik.http.routers.jenkins.entrypoints=prd"
+      - "traefik.http.routers.jenkins.tls=true"
+      - "traefik.http.routers.jenkins.tls.certresolver=myresolver"
+      - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`monitoring.mysterchat.com`)"
+      - "traefik.http.routers.grafana.entrypoints=prd"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
