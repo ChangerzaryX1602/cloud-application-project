@@ -132,14 +132,38 @@ services:
       - "traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"
     restart: unless-stopped
 
+  # Original Zitadel Login UI (for reference/fallback)
+  # login-original:
+  #   restart: unless-stopped
+  #   image: ghcr.io/zitadel/zitadel-login:latest
+  #   environment:
+  #     - ZITADEL_API_URL=http://zitadel:8080
+  #     - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+  #     - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
+  #     - CUSTOM_REQUEST_HEADERS=Host:sso.mysterchat.com
+  #   networks:
+  #     - traefik
+  #   user: "0"
+  #   volumes:
+  #     - ./data/zitadel:/current-dir:ro
+  #   depends_on:
+  #     zitadel:
+  #       condition: service_healthy
+  #       restart: false
+
+  # Custom KKU Login UI
   login:
     restart: unless-stopped
-    image: ghcr.io/zitadel/zitadel-login:latest
+    build:
+      context: ./login-ui
+      dockerfile: Dockerfile
+    image: kku-login-ui:latest
     environment:
       - ZITADEL_API_URL=http://zitadel:8080
       - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
-      - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/app/pat/login-client.pat
       - CUSTOM_REQUEST_HEADERS=Host:sso.mysterchat.com
+      - NEXT_PUBLIC_APPLICATION_NAME=KKU Cloud Application Project SSO
     networks:
       - traefik
     labels:
@@ -154,7 +178,7 @@ services:
       - "traefik.http.services.zitadel-v2.loadbalancer.server.scheme=http"
     user: "0"
     volumes:
-      - ./data/zitadel:/current-dir:ro
+      - ./data/zitadel:/app/pat:ro
     depends_on:
       zitadel:
         condition: service_healthy
