@@ -42,6 +42,7 @@ services:
       TZ: Asia/Bangkok
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+      - ./configs/erpnext-init.sql:/docker-entrypoint-initdb.d/10-erpnext.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s

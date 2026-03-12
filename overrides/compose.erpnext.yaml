@@ -1,0 +1,171 @@
+networks:
+  traefik:
+    external: true
+    name: traefik
+
+services:
+  # Redis for ERPNext queue and socketio
+  erpnext-redis:
+    image: redis:alpine
+    container_name: erpnext-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ./data/erpnext/redis:/data
+    networks:
+      - traefik
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ERPNext Frontend (Web Interface)
+  erpnext-frontend:
+    image: frappe/erpnext:latest
+    container_name: erpnext-frontend
+    command:
+      - bench
+      - start
+    environment:
+      - FRAPPE_SITE_NAME=erpnext.mysterchat.com
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=erpnext
+      - DB_USER=erpnext
+      - DB_PASSWORD=ChangeMe123!
+      - REDIS_QUEUE=redis://erpnext-redis:6379
+      - REDIS_CACHE=redis://erpnext-redis:6379
+      - REDIS_SOCKETIO=redis://erpnext-redis:6379
+      - SOCKETIO_PORT=9000
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=ChangeMe123!
+      - AUTO_MIGRATE=1
+      - MAINTENANCE_MODE=0
+      - ERPNEXT_SITE_NAME=erpnext.mysterchat.com
+    volumes:
+      - ./data/erpnext/sites:/home/frappe/frappe-bench/sites
+      - ./data/erpnext/logs:/home/frappe/frappe-bench/logs
+      - ./data/erpnext/assets:/home/frappe/frappe-bench/sites/assets
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.erpnext.rule=Host(`erpnext.mysterchat.com`)"
+      - "traefik.http.routers.erpnext.entrypoints=prd"
+      - "traefik.http.routers.erpnext.tls=true"
+      - "traefik.http.routers.erpnext.tls.certresolver=myresolver"
+      - "traefik.http.routers.erpnext.middlewares=erpnext-headers"
+      - "traefik.http.middlewares.erpnext-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.services.erpnext.loadbalancer.server.port=8000"
+    depends_on:
+      - erpnext-redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ERPNext Backend (Worker)
+  erpnext-backend:
+    image: frappe/erpnext:latest
+    container_name: erpnext-backend
+    command:
+      - bench
+      - worker
+      - --queue
+      - short,medium,long,default,all
+    environment:
+      - FRAPPE_SITE_NAME=erpnext.mysterchat.com
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=erpnext
+      - DB_USER=erpnext
+      - DB_PASSWORD=ChangeMe123!
+      - REDIS_QUEUE=redis://erpnext-redis:6379
+      - REDIS_CACHE=redis://erpnext-redis:6379
+      - REDIS_SOCKETIO=redis://erpnext-redis:6379
+    volumes:
+      - ../data/erpnext/sites:/home/frappe/frappe-bench/sites
+      - ../data/erpnext/logs:/home/frappe/frappe-bench/logs
+    networks:
+      - traefik
+    depends_on:
+      - erpnext-redis
+      - erpnext-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "bench worker-status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ERPNext Scheduler
+  erpnext-scheduler:
+    image: frappe/erpnext:latest
+    container_name: erpnext-scheduler
+    command:
+      - bench
+      - schedule
+    environment:
+      - FRAPPE_SITE_NAME=erpnext.mysterchat.com
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=erpnext
+      - DB_USER=erpnext
+      - DB_PASSWORD=ChangeMe123!
+      - REDIS_QUEUE=redis://erpnext-redis:6379
+      - REDIS_CACHE=redis://erpnext-redis:6379
+      - REDIS_SOCKETIO=redis://erpnext-redis:6379
+    volumes:
+      - ../data/erpnext/sites:/home/frappe/frappe-bench/sites
+      - ../data/erpnext/logs:/home/frappe/frappe-bench/logs
+    networks:
+      - traefik
+    depends_on:
+      - erpnext-redis
+      - erpnext-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "bench schedule-status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ERPNext SocketIO Server (for real-time features)
+  erpnext-socketio:
+    image: frappe/erpnext:latest
+    container_name: erpnext-socketio
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    environment:
+      - FRAPPE_SITE_NAME=erpnext.mysterchat.com
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=erpnext
+      - DB_USER=erpnext
+      - DB_PASSWORD=ChangeMe123!
+      - REDIS_QUEUE=redis://erpnext-redis:6379
+      - REDIS_CACHE=redis://erpnext-redis:6379
+      - REDIS_SOCKETIO=redis://erpnext-redis:6379
+      - SOCKETIO_PORT=9000
+    volumes:
+      - ../data/erpnext/sites:/home/frappe/frappe-bench/sites
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.erpnext-socketio.rule=Host(`erpnext.mysterchat.com`) && PathPrefix(`/socket.io`)"
+      - "traefik.http.routers.erpnext-socketio.entrypoints=prd"
+      - "traefik.http.routers.erpnext-socketio.tls=true"
+      - "traefik.http.routers.erpnext-socketio.tls.certresolver=myresolver"
+      - "traefik.http.services.erpnext-socketio.loadbalancer.server.port=9000"
+    depends_on:
+      - erpnext-redis
+      - erpnext-frontend
+    restart: unless-stopped

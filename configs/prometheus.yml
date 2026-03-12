@@ -9,3 +9,13 @@ scrape_configs:
   - job_name: 'traefik'
     static_configs:
       - targets: ['traefik:8080']
+
+  - job_name: 'platform-fastapi'
+    static_configs:
+      - targets: ['platform-fastapi:8000']
+    metrics_path: /metrics
+
+  - job_name: 'erpnext'
+    static_configs:
+      - targets: ['erpnext-frontend:8000']
+    metrics_path: /api/method/frappe.utils.redis_monitor.get_redis_status
