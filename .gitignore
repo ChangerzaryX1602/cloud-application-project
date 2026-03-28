@@ -1,6 +1,10 @@
 # Data directories
 data/*
 !data/.gitkeep
+overrides/data/
+
+# Lockfiles from alternative package managers
+bun.lock
 
 # Node.js build artifacts
 node_modules/
