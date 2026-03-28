@@ -26,14 +26,14 @@ const navItems = [
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { token, user } = useAuth()
+  const { token, user, loading } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
 
   useEffect(() => {
-    if (!token) {
+    if (!loading && !token) {
       router.replace('/login')
     }
-  }, [token, router])
+  }, [token, loading, router])
 
   async function handleLogout() {
     if (loggingOut) return

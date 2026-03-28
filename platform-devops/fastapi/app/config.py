@@ -13,7 +13,8 @@ class Settings(BaseSettings):
     )
 
     # ERPNext connection
-    ERPNEXT_URL: str = "http://frontend:8080"
+    ERPNEXT_URL: str = "http://frontend:8080"           # internal Docker URL
+    ERPNEXT_PUBLIC_URL: str = ""                        # public browser-facing URL (e.g. https://erpnext.mysterchat.com)
     ERPNEXT_CLIENT_ID: str = ""
     ERPNEXT_CLIENT_SECRET: str = ""
 

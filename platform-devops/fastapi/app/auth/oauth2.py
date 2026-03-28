@@ -43,7 +43,7 @@ def get_authorization_url(
             "code_challenge_method": "S256",
         }
     )
-    base = settings.ERPNEXT_URL.rstrip("/")
+    base = (settings.ERPNEXT_PUBLIC_URL or settings.ERPNEXT_URL).rstrip("/")
     return f"{base}/api/method/frappe.integrations.oauth2.authorize?{params}"
 
 

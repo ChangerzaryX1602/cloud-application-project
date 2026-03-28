@@ -8,7 +8,9 @@ from fastapi import APIRouter, Depends, status
 from app.auth.jwt import get_current_user, require_role
 from app.erpnext.client import erpnext_client
 from app.roles.schemas import (
+    RoleListResponse,
     RoleProfileCreate,
+    RoleProfileListResponse,
     RoleProfileResponse,
     RoleProfileUpdate,
     RoleResponse,
@@ -49,26 +51,26 @@ def _normalize_role_profile(raw: dict[str, Any]) -> RoleProfileResponse:
 
 @router.get(
     "/",
-    response_model=list[RoleResponse],
+    response_model=RoleListResponse,
     summary="List all ERPNext roles",
 )
-async def list_roles() -> list[RoleResponse]:
+async def list_roles() -> RoleListResponse:
     """Return all Role documents from ERPNext."""
     result = await erpnext_client.list_roles()
     raw: list[dict[str, Any]] = result.get("data", [])
-    return [RoleResponse(name=r.get("name", "")) for r in raw]
+    return RoleListResponse(data=[RoleResponse(name=r.get("name", "")) for r in raw])
 
 
 @router.get(
     "/profiles",
-    response_model=list[RoleProfileResponse],
+    response_model=RoleProfileListResponse,
     summary="List all role profiles",
 )
-async def list_role_profiles() -> list[RoleProfileResponse]:
+async def list_role_profiles() -> RoleProfileListResponse:
     """Return all Role Profile documents from ERPNext."""
     result = await erpnext_client.list_role_profiles()
     raw: list[dict[str, Any]] = result.get("data", [])
-    return [_normalize_role_profile(r) for r in raw]
+    return RoleProfileListResponse(data=[_normalize_role_profile(r) for r in raw])
 
 
 @router.post(

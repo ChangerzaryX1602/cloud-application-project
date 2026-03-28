@@ -9,6 +9,10 @@ class RoleResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RoleListResponse(BaseModel):
+    data: list[RoleResponse]
+
+
 class RoleProfileCreate(BaseModel):
     name: str
     roles: list[str] = Field(default_factory=list)
@@ -23,3 +27,7 @@ class RoleProfileResponse(BaseModel):
     roles: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
+
+
+class RoleProfileListResponse(BaseModel):
+    data: list[RoleProfileResponse]

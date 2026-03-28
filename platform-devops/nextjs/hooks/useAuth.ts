@@ -12,11 +12,13 @@ interface AuthUser {
 interface UseAuthReturn {
   token: string | undefined
   user: AuthUser | null
+  loading: boolean
 }
 
 export function useAuth(): UseAuthReturn {
   const [token, setToken] = useState<string | undefined>(undefined)
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const t = getToken()
@@ -31,7 +33,8 @@ export function useAuth(): UseAuthReturn {
         })
       }
     }
+    setLoading(false)
   }, [])
 
-  return { token, user }
+  return { token, user, loading }
 }

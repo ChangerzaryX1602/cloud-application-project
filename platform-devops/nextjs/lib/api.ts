@@ -57,12 +57,12 @@ export const usersApi = {
         .filter(([, v]) => v !== undefined && v !== '' && v !== null)
         .map(([k, v]) => [k, String(v)])
     )
-    return fetchApi<{ data: User[]; total: number }>(`/users?${query}`, {}, token)
+    return fetchApi<{ data: User[]; total: number }>(`/users/?${query}`, {}, token)
   },
   get: (email: string, token: string) =>
     fetchApi<User>(`/users/${encodeURIComponent(email)}`, {}, token),
   create: (data: UserCreate, token: string) =>
-    fetchApi<User>('/users', { method: 'POST', body: JSON.stringify(data) }, token),
+    fetchApi<User>('/users/', { method: 'POST', body: JSON.stringify(data) }, token),
   update: (email: string, data: UserUpdate, token: string) =>
     fetchApi<User>(
       `/users/${encodeURIComponent(email)}`,
@@ -79,12 +79,12 @@ export const usersApi = {
 
 // Roles
 export const rolesApi = {
-  list: (token: string) => fetchApi<{ data: Role[] }>('/roles', {}, token),
+  list: (token: string) => fetchApi<{ data: Role[] }>('/roles/', {}, token),
   listProfiles: (token: string) =>
-    fetchApi<{ data: RoleProfile[] }>('/roles/profiles', {}, token),
+    fetchApi<{ data: RoleProfile[] }>('/roles/profiles/', {}, token),
   createProfile: (data: RoleProfileCreate, token: string) =>
     fetchApi<RoleProfile>(
-      '/roles/profiles',
+      '/roles/profiles/',
       { method: 'POST', body: JSON.stringify(data) },
       token
     ),
@@ -114,7 +114,7 @@ export const auditApi = {
         .filter(([, v]) => v !== undefined && v !== '' && v !== null)
         .map(([k, v]) => [k, String(v)])
     )
-    return fetchApi<{ data: AuditLog[]; total: number }>(`/audit-logs?${query}`, {}, token)
+    return fetchApi<{ data: AuditLog[]; total: number }>(`/audit-logs/?${query}`, {}, token)
   },
 }
 

@@ -22,7 +22,7 @@ def _normalize_log(raw: dict[str, Any]) -> AuditLogResponse:
     return AuditLogResponse(
         name=raw.get("name", ""),
         user=raw.get("user"),
-        operation=raw.get("operation"),
+        operation=raw.get("subject"),   # ERPNext uses "subject", not "operation"
         reference_doctype=raw.get("reference_doctype"),
         reference_name=raw.get("reference_name"),
         creation=raw.get("creation"),
