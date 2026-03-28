@@ -3,6 +3,21 @@ data/*
 !data/.gitkeep
 overrides/data/
 
+# Jenkins runtime data
+data/jenkins/
+
+# ERPNext runtime data
+data/erpnext/
+
+# Traefik runtime data (contains TLS certs)
+data/traefik/
+
+# Zitadel runtime data (contains tokens)
+data/zitadel/
+
+# Postgres runtime data
+data/postgres/
+
 # Lockfiles from alternative package managers
 bun.lock
 
