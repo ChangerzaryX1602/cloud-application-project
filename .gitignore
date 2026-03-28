@@ -18,6 +18,12 @@ data/zitadel/
 # Postgres runtime data
 data/postgres/
 
+# Grafana runtime data (database, plugins)
+data/grafana/
+
+# Prometheus runtime data (TSDB, WAL)
+data/prometheus/
+
 # Lockfiles from alternative package managers
 bun.lock
 
