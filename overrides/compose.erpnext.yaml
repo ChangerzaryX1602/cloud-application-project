@@ -45,15 +45,13 @@ services:
       - bash
       - -c
     command:
-      - >
-        ls -1 apps > apps.txt 2>/dev/null || printf 'frappe\nerpnext\n' > apps.txt;
-        cp apps.txt sites/apps.txt;
-        bench set-config -g db_host $$DB_HOST;
-        bench set-config -gp db_port $$DB_PORT;
-        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
-        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
-        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
-        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+      - |
+        printf 'frappe\nerpnext\n' > /home/frappe/frappe-bench/apps.txt
+        printf 'frappe\nerpnext\n' > /home/frappe/frappe-bench/sites/apps.txt
+        printf '{"db_host":"%s","db_port":%s,"redis_cache":"redis://%s","redis_queue":"redis://%s","redis_socketio":"redis://%s","socketio_port":%s}\n' \
+          "$$DB_HOST" "$$DB_PORT" "$$REDIS_CACHE" "$$REDIS_QUEUE" "$$REDIS_QUEUE" "$$SOCKETIO_PORT" \
+          > /home/frappe/frappe-bench/sites/common_site_config.json
+        echo "Configurator done."
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
