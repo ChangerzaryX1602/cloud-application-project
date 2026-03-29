@@ -43,6 +43,43 @@ export interface AuditLog {
   creation: string
 }
 
+export interface Permission {
+  name: string
+  doctype: string
+  role: string
+  permlevel: number
+  read: boolean
+  write: boolean
+  create: boolean
+  delete: boolean
+  submit: boolean
+  cancel: boolean
+  amend: boolean
+}
+
+export interface PermissionCreate {
+  doctype: string
+  role: string
+  permlevel?: number
+  read?: boolean
+  write?: boolean
+  create?: boolean
+  delete?: boolean
+  submit?: boolean
+  cancel?: boolean
+  amend?: boolean
+}
+
+export interface PermissionUpdate {
+  read?: boolean
+  write?: boolean
+  create?: boolean
+  delete?: boolean
+  submit?: boolean
+  cancel?: boolean
+  amend?: boolean
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   total: number

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Shield,
+  Lock,
   ScrollText,
   Settings,
   LogOut,
@@ -19,6 +20,7 @@ const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Users', href: '/users', icon: Users },
   { label: 'Roles', href: '/roles', icon: Shield },
+  { label: 'Permissions', href: '/permissions', icon: Lock },
   { label: 'Audit Logs', href: '/audit-logs', icon: ScrollText },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]

@@ -17,6 +17,7 @@ from app.config import settings
 from app.erpnext.client import erpnext_client
 from app.middleware.rate_limit import limiter
 from app.middleware.security import RequestIDMiddleware
+from app.permissions.router import router as permissions_router
 from app.roles.router import router as roles_router
 from app.users.router import router as users_router
 from app.webhooks.router import router as webhooks_router
@@ -129,6 +130,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(roles_router)
 app.include_router(audit_router)
+app.include_router(permissions_router)
 app.include_router(webhooks_router)
 
 

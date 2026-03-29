@@ -6,6 +6,9 @@ import type {
   RoleProfile,
   RoleProfileCreate,
   AuditLog,
+  Permission,
+  PermissionCreate,
+  PermissionUpdate,
   TokenResponse,
   AuthorizeUrlResponse,
 } from './types'
@@ -116,6 +119,44 @@ export const auditApi = {
     )
     return fetchApi<{ data: AuditLog[]; total: number }>(`/audit-logs/?${query}`, {}, token)
   },
+  listTypes: (token: string) =>
+    fetchApi<string[]>('/audit-logs/types/', {}, token),
+  listPermissionLogs: (
+    params: { doctype?: string; user?: string; page?: number; page_size?: number },
+    token: string
+  ) => {
+    const query = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined && v !== '' && v !== null)
+        .map(([k, v]) => [k, String(v)])
+    )
+    return fetchApi<{ data: AuditLog[]; total: number }>(`/audit-logs/permissions/?${query}`, {}, token)
+  },
+}
+
+// Permissions
+export const permissionsApi = {
+  list: (
+    params: { doctype?: string; role?: string; page?: number; page_size?: number },
+    token: string
+  ) => {
+    const query = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined && v !== '' && v !== null)
+        .map(([k, v]) => [k, String(v)])
+    )
+    return fetchApi<{ data: Permission[]; total: number }>(`/permissions/?${query}`, {}, token)
+  },
+  create: (data: PermissionCreate, token: string) =>
+    fetchApi<Permission>('/permissions/', { method: 'POST', body: JSON.stringify(data) }, token),
+  update: (name: string, data: PermissionUpdate, token: string) =>
+    fetchApi<Permission>(
+      `/permissions/${encodeURIComponent(name)}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      token
+    ),
+  remove: (name: string, token: string) =>
+    fetchApi<void>(`/permissions/${encodeURIComponent(name)}`, { method: 'DELETE' }, token),
 }
 
 // Auth

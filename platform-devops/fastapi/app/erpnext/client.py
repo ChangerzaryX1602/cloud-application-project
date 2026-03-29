@@ -247,6 +247,112 @@ class ERPNextClient:
         return response.json()
 
     # ------------------------------------------------------------------
+    # Permissions (DocPerm)
+    # ------------------------------------------------------------------
+
+    async def list_permissions(
+        self,
+        doctype: str | None = None,
+        role: str | None = None,
+        limit: int = 50,
+        start: int = 0,
+    ) -> dict[str, Any]:
+        """List ERPNext DocPerm records."""
+        params: dict[str, Any] = {
+            "fields": json.dumps([
+                "name", "parent", "role", "permlevel",
+                "read", "write", "create", "delete",
+                "submit", "cancel", "amend",
+            ]),
+            "limit_page_length": limit,
+            "limit_start": start,
+            "order_by": "parent asc, role asc",
+        }
+        filters: list[list[str]] = []
+        if doctype:
+            filters.append(["DocPerm", "parent", "=", doctype])
+        if role:
+            filters.append(["DocPerm", "role", "=", role])
+        if filters:
+            params["filters"] = json.dumps(filters)
+        response = await self._request("GET", "/api/resource/DocPerm", params=params)
+        return response.json()
+
+    async def create_permission(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Create a new DocPerm record."""
+        response = await self._request("POST", "/api/resource/DocPerm", json_body=data)
+        return response.json()
+
+    async def update_permission(self, name: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Update a DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        response = await self._request(
+            "PUT", f"/api/resource/DocPerm/{encoded}", json_body=data
+        )
+        return response.json()
+
+    async def delete_permission(self, name: str) -> None:
+        """Delete a DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        await self._request("DELETE", f"/api/resource/DocPerm/{encoded}")
+
+    async def log_permission_change(
+        self,
+        action: str,
+        perm_name: str,
+        doctype_name: str,
+        role: str,
+        user: str,
+    ) -> None:
+        """Write an Activity Log entry for a permission change."""
+        subject = f"Permission {action}: DocType '{doctype_name}', Role '{role}'"
+        try:
+            await self._request(
+                "POST",
+                "/api/resource/Activity Log",
+                json_body={
+                    "doctype": "Activity Log",
+                    "subject": subject,
+                    "reference_doctype": "DocPerm",
+                    "reference_name": perm_name,
+                    "user": user,
+                    "operation": action,
+                },
+            )
+        except Exception:
+            logger.warning("permission_audit_log_failed", perm_name=perm_name)
+
+    async def list_permission_logs(
+        self,
+        doctype: str | None = None,
+        user: str | None = None,
+        limit: int = 50,
+        start: int = 0,
+    ) -> dict[str, Any]:
+        """List Activity Log entries related to DocPerm changes."""
+        filters: list[list[str]] = [
+            ["Activity Log", "reference_doctype", "=", "DocPerm"],
+        ]
+        if user:
+            filters.append(["Activity Log", "user", "=", user])
+        if doctype:
+            filters.append(["Activity Log", "subject", "like", f"%'{doctype}'%"])
+        params: dict[str, Any] = {
+            "fields": json.dumps([
+                "name", "user", "subject", "reference_doctype",
+                "reference_name", "creation", "operation",
+            ]),
+            "filters": json.dumps(filters),
+            "limit_page_length": limit,
+            "limit_start": start,
+            "order_by": "creation desc",
+        }
+        response = await self._request(
+            "GET", "/api/resource/Activity Log", params=params
+        )
+        return response.json()
+
+    # ------------------------------------------------------------------
     # Audit / Activity Log
     # ------------------------------------------------------------------
 
@@ -273,6 +379,27 @@ class ERPNextClient:
             "GET", "/api/resource/Activity Log", params=params
         )
         return response.json()
+
+
+    async def list_activity_log_types(self) -> list[str]:
+        """Return distinct subject (operation) values from Activity Log."""
+        params: dict[str, Any] = {
+            "fields": json.dumps(["subject"]),
+            "distinct": "true",
+            "limit_page_length": 500,
+        }
+        response = await self._request(
+            "GET", "/api/resource/Activity Log", params=params
+        )
+        rows: list[dict[str, Any]] = response.json().get("data", [])
+        seen: set[str] = set()
+        result: list[str] = []
+        for row in rows:
+            val = row.get("subject", "").strip()
+            if val and val not in seen:
+                seen.add(val)
+                result.append(val)
+        return sorted(result)
 
 
 # Module-level singleton
