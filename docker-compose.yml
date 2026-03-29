@@ -288,14 +288,14 @@ services:
       context: ./platform-devops/nextjs
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_FASTAPI_URL: http://localhost:8000/api
+        NEXT_PUBLIC_FASTAPI_URL: http://localhost:8000
         NEXT_PUBLIC_APP_URL: httrp://localhost:3000
     image: platform-nextjs:latest
     container_name: platform-nextjs
     environment:
       - FASTAPI_URL=http://localhost:8000
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
-      - NEXT_PUBLIC_FASTAPI_URL=https://localhost:8000/api
+      - NEXT_PUBLIC_FASTAPI_URL=https://localhost:8000
     networks:
       - traefik
     labels:
