@@ -1,3 +1,5 @@
+docker compose down
+docker compose -f overrides/compose.erpnext.yaml down
 docker network create traefik
 cp platform-devops/.env.example platform-devops/.env
 mkdir -p data/erpnext/{sites,logs,redis}
@@ -24,12 +26,9 @@ docker exec erpnext-backend bash -c 'bench --site erpnext.mysterchat.com set-adm
 GENERATE_OUTPUT=$(docker exec erpnext-backend bash -c "bench --site erpnext.mysterchat.com execute frappe.core.doctype.user.user.generate_keys --args '[\"Administrator\"]'" 2>&1)
 echo "generate_keys output: $GENERATE_OUTPUT"
 
-# The API secret is printed once by generate_keys — capture it
-ERPNEXT_API_SECRET=$(echo "$GENERATE_OUTPUT" | grep -oP "(?<=api_secret['\"]:\s['\"])[^'\"]+")
-
-# Retrieve the API key from ERPNext (it's stored and queryable)
-sleep 10
-ERPNEXT_API_KEY=$(docker exec erpnext-backend bash -c "bench --site erpnext.mysterchat.com execute frappe.client.get_value --args '[\"User\", \"Administrator\", \"api_key\"]'" 2>&1 | grep -oP "(?<=api_key['\"]:\s['\"])[^'\"]+")
+# Extract both api_key and api_secret from the generate_keys output
+ERPNEXT_API_KEY=$(echo "$GENERATE_OUTPUT" | sed -n 's/.*api_key["'"'"']: *["'"'"']\([^"'"'"']*\).*/\1/p')
+ERPNEXT_API_SECRET=$(echo "$GENERATE_OUTPUT" | sed -n 's/.*api_secret["'"'"']: *["'"'"']\([^"'"'"']*\).*/\1/p')
 
 echo "Captured API Key: $ERPNEXT_API_KEY"
 echo "Captured API Secret: $ERPNEXT_API_SECRET"
