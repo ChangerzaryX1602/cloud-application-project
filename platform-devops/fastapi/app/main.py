@@ -98,6 +98,7 @@ app = FastAPI(
         "ERPNext is the system of record for users and roles."
     ),
     version="1.0.0",
+    root_path="/api",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
