@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     WEBHOOK_SECRET: str = ""
 
     # CORS
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: str | list[str] = ["http://localhost:3000"]
 
     # Misc
     DEBUG: bool = False
