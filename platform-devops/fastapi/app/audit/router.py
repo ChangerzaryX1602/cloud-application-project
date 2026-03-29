@@ -22,11 +22,22 @@ def _normalize_log(raw: dict[str, Any]) -> AuditLogResponse:
     return AuditLogResponse(
         name=raw.get("name", ""),
         user=raw.get("user"),
-        operation=raw.get("subject"),   # ERPNext uses "subject", not "operation"
+        # For general logs use subject; for permission logs use operation field directly
+        operation=raw.get("operation") or raw.get("subject"),
         reference_doctype=raw.get("reference_doctype"),
         reference_name=raw.get("reference_name"),
         creation=raw.get("creation"),
     )
+
+
+@router.get(
+    "/types/",
+    response_model=list[str],
+    summary="List distinct activity log operation types",
+)
+async def list_audit_log_types() -> list[str]:
+    """Return all distinct operation/subject values seen in the Activity Log."""
+    return await erpnext_client.list_activity_log_types()
 
 
 @router.get(
@@ -49,7 +60,7 @@ async def list_audit_logs(
         filters.append(["Activity Log", "user", "=", user])
 
     if operation:
-        filters.append(["Activity Log", "operation", "=", operation])
+        filters.append(["Activity Log", "subject", "like", f"%{operation}%"])
 
     if start_date:
         filters.append(["Activity Log", "creation", ">=", start_date])
@@ -69,4 +80,27 @@ async def list_audit_logs(
     raw_list: list[dict[str, Any]] = result.get("data", [])
     logs = [_normalize_log(entry) for entry in raw_list]
 
+    return AuditLogListResponse(data=logs, total=len(logs))
+
+
+@router.get(
+    "/permissions/",
+    response_model=AuditLogListResponse,
+    summary="List permission change audit logs",
+)
+async def list_permission_audit_logs(
+    doctype: str = Query("", description="Filter by DocType name"),
+    user: str = Query("", description="Filter by user email"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+) -> AuditLogListResponse:
+    """Return Activity Log entries for DocPerm create/update/delete operations."""
+    result = await erpnext_client.list_permission_logs(
+        doctype=doctype or None,
+        user=user or None,
+        limit=page_size,
+        start=(page - 1) * page_size,
+    )
+    raw_list: list[dict[str, Any]] = result.get("data", [])
+    logs = [_normalize_log(entry) for entry in raw_list]
     return AuditLogListResponse(data=logs, total=len(logs))
