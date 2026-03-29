@@ -7,7 +7,7 @@ sudo chown -R 1000:1000 data/erpnext/
 docker compose up -d
 docker compose -f overrides/compose.erpnext.yaml up -d
 docker compose -f overrides/compose.erpnext.yaml ps
-sleep 180
+sleep 60
 docker exec -it erpnext-backend bash -c 'bench new-site erpnext.mysterchat.com \
   --db-type postgres \
   --db-host postgres \
