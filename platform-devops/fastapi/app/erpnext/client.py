@@ -18,7 +18,6 @@ _DEFAULT_USER_FIELDS = [
     "enabled",
     "last_login",
     "last_ip",
-    "roles",
 ]
 
 
@@ -160,6 +159,25 @@ class ERPNextClient:
 
         response = await self._request("GET", "/api/resource/User", params=params)
         return response.json()
+
+    async def list_user_roles(self, user_names: list[str]) -> dict[str, list[str]]:
+        """Return a mapping of {email: [role, ...]} for the given users."""
+        if not user_names:
+            return {}
+        params: dict[str, Any] = {
+            "fields": json.dumps(["parent", "role"]),
+            "filters": json.dumps([["Has Role", "parent", "in", user_names]]),
+            "limit_page_length": 500,
+        }
+        response = await self._request("GET", "/api/resource/Has Role", params=params)
+        rows: list[dict[str, Any]] = response.json().get("data", [])
+        result: dict[str, list[str]] = {}
+        for row in rows:
+            parent = row.get("parent", "")
+            role = row.get("role", "")
+            if parent and role:
+                result.setdefault(parent, []).append(role)
+        return result
 
     async def get_user(self, email: str) -> dict[str, Any]:
         """Fetch a single ERPNext User document."""

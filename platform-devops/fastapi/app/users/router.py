@@ -76,7 +76,15 @@ async def list_users(
     )
 
     raw_list: list[dict[str, Any]] = result.get("data", [])
-    users = [_normalize_user(u) for u in raw_list]
+
+    user_names = [u.get("name", "") for u in raw_list if u.get("name")]
+    roles_map = await erpnext_client.list_user_roles(user_names)
+
+    users = []
+    for u in raw_list:
+        user = _normalize_user(u)
+        user.roles = roles_map.get(u.get("name", ""), [])
+        users.append(user)
 
     return UserListResponse(data=users, total=len(users))
 
