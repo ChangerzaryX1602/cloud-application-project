@@ -112,29 +112,6 @@ docker exec erpnext-backend bash -c 'bench --site erpnext.mysterchat.com set-adm
 
 ## Step 6: Get ERPNext API Key & Secret
 
-1. Open `https://erpnext.mysterchat.com`
-
-   > **If DNS is not configured**, add all service domains to `/etc/hosts` first (one-time setup):
-   > ```bash
-   > echo "127.0.0.1 sso.mysterchat.com erpnext.mysterchat.com platform.mysterchat.com ci.mysterchat.com monitoring.mysterchat.com" | sudo tee -a /etc/hosts
-   > ```
-   > Verify with:
-   > ```bash
-   > grep mysterchat.com /etc/hosts
-   > ```
-
-2. Log in with:
-
-   | Field    | Value               |
-   |----------|---------------------|
-   | Email    | `admin@example.com` (**not** `admin`) |
-   | Password | `ChangeMe123!`      |
-
-3. Go to: **top-right menu → My Profile → API Access** section
-4. Click **Generate Keys** — copy the API Key and API Secret immediately *(shown once)*
-
-**Alternatively via bench CLI (no browser needed):**
-
 ```bash
 docker exec erpnext-backend bash -c "bench --site erpnext.mysterchat.com execute frappe.core.doctype.user.user.generate_keys --args '[\"Administrator\"]'"
 ```
