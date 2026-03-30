@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import urllib.parse
 from typing import Any
@@ -221,13 +222,28 @@ class ERPNextClient:
         return response.json()
 
     async def list_role_profiles(self) -> dict[str, Any]:
-        """List all ERPNext Role Profile documents."""
-        response = await self._request(
+        """List all ERPNext Role Profile documents with their roles child table."""
+        list_response = await self._request(
             "GET",
             "/api/resource/Role Profile",
             params={"limit_page_length": 200},
         )
-        return response.json()
+        names: list[str] = [
+            item.get("name", "")
+            for item in list_response.json().get("data", [])
+            if item.get("name")
+        ]
+
+        async def _fetch_one(name: str) -> dict[str, Any]:
+            encoded = urllib.parse.quote(name, safe="")
+            try:
+                r = await self._request("GET", f"/api/resource/Role Profile/{encoded}")
+                return r.json().get("data", {"name": name, "roles": []})
+            except Exception:
+                return {"name": name, "roles": []}
+
+        profiles = await asyncio.gather(*[_fetch_one(n) for n in names])
+        return {"data": list(profiles)}
 
     async def create_role_profile(self, data: dict[str, Any]) -> dict[str, Any]:
         """Create a new ERPNext Role Profile document."""
