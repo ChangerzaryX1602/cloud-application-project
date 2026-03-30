@@ -15,7 +15,7 @@
 
 ### Setup
 
- - Run <br>run.sh</br> file to generate <br>.env</br> file with api key and api secret
+ - Run <b>run.sh</b> file to generate <b>.env</b> file with api key and api secret
  - open ERPNEXT; then create Oauth client to get client_id and client_secret, then add to .env
- - Run <br>dev.sh</br> after setting .env success
+ - Run <b>dev.sh</b> after setting .env success
 
