@@ -38,8 +38,6 @@ export interface AuditLog {
   name: string
   user: string
   operation: string
-  reference_doctype: string
-  reference_name: string
   creation: string
 }
 

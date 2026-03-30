@@ -7,8 +7,6 @@ class AuditLogResponse(BaseModel):
     name: str
     user: str | None = None
     operation: str | None = None
-    reference_doctype: str | None = None
-    reference_name: str | None = None
     creation: str | None = None
 
     model_config = {"from_attributes": True}
