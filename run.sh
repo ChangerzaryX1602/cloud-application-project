@@ -7,7 +7,7 @@ sudo chown -R 1000:1000 data/erpnext/
 docker compose up -d
 docker compose -f overrides/compose.erpnext.yaml up -d
 docker compose -f overrides/compose.erpnext.yaml ps
-sleep 60
+sleep 30
 docker exec -it erpnext-backend bash -c 'bench new-site erpnext.mysterchat.com \
   --force \
   --db-type postgres \
@@ -21,7 +21,7 @@ docker exec -it erpnext-backend bash -c 'bench new-site erpnext.mysterchat.com \
   --admin-password ChangeMe123! \
   --install-app erpnext'
 docker compose -f overrides/compose.erpnext.yaml restart
-sleep 60
+sleep 30
 docker exec erpnext-backend bash -c 'bench --site erpnext.mysterchat.com set-admin-password ChangeMe123!'
 # Generate API keys for Administrator and capture the secret
 GENERATE_OUTPUT=$(docker exec erpnext-backend bash -c "bench --site erpnext.mysterchat.com execute frappe.core.doctype.user.user.generate_keys --args '[\"Administrator\"]'" 2>&1)
