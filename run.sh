@@ -39,8 +39,8 @@ cat > platform-devops/.env << EOF
 # ERPNext connection
 ERPNEXT_URL=http://erpnext-frontend:8080             # internal Docker URL for server-to-server calls
 ERPNEXT_PUBLIC_URL=http://localhost:8081            # public URL for browser redirects
-ERPNEXT_CLIENT_ID=platform_devops
-ERPNEXT_CLIENT_SECRET=change_me_client_secret
+ERPNEXT_CLIENT_ID=<change_me_client_id>
+ERPNEXT_CLIENT_SECRET=<change_me_client_secret>
 
 # ERPNext API key/secret for server-to-server calls
 ERPNEXT_API_KEY=${ERPNEXT_API_KEY}
