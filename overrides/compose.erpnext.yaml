@@ -26,6 +26,8 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - ${PWD}/data/erpnext/redis:/data
+    ports:
+      - "6379:6379"
     networks:
       - traefik
     restart: unless-stopped
@@ -69,6 +71,8 @@ services:
   erpnext-backend:
     <<: [*erpnext_image, *erpnext_volumes, *erpnext_depends]
     container_name: erpnext-backend
+    ports:
+      - "8002:8000"
     networks:
       - traefik
 
@@ -89,6 +93,8 @@ services:
       CLIENT_MAX_BODY_SIZE: 50m
     volumes:
       - ${PWD}/data/erpnext/sites:/home/frappe/frappe-bench/sites
+    ports:
+      - "8081:8080"
     networks:
       - traefik
     labels:
@@ -113,6 +119,8 @@ services:
       - /home/frappe/frappe-bench/apps/frappe/socketio.js
     volumes:
       - ${PWD}/data/erpnext/sites:/home/frappe/frappe-bench/sites
+    ports:
+      - "9000:9000"
     networks:
       - traefik
 

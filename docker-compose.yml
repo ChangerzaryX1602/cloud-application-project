@@ -195,6 +195,8 @@ services:
       - ./data/jenkins:/var/jenkins_home
       - /home/changerzaryx/cloud-application-project:/home/changerzaryx/cloud-application-project
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8085:8080"
     networks:
       - traefik
     labels:
