@@ -312,6 +312,63 @@ class ERPNextClient:
         encoded = urllib.parse.quote(name, safe="")
         await self._request("DELETE", f"/api/resource/DocPerm/{encoded}")
 
+    # ------------------------------------------------------------------
+    # Permissions (Custom DocPerm)
+    # ------------------------------------------------------------------
+
+    async def list_custom_permissions(
+        self,
+        doctype: str | None = None,
+        role: str | None = None,
+        limit: int = 50,
+        start: int = 0,
+    ) -> dict[str, Any]:
+        """List ERPNext Custom DocPerm records."""
+        params: dict[str, Any] = {
+            "fields": json.dumps([
+                "name", "parent", "role", "permlevel",
+                "read", "write", "create", "delete",
+                "submit", "cancel", "amend",
+            ]),
+            "limit_page_length": limit,
+            "limit_start": start,
+            "order_by": "parent asc, role asc",
+        }
+        filters: list[list[str]] = []
+        if doctype:
+            filters.append(["Custom DocPerm", "parent", "=", doctype])
+        if role:
+            filters.append(["Custom DocPerm", "role", "=", role])
+        if filters:
+            params["filters"] = json.dumps(filters)
+
+        response = await self._request(
+            "GET", "/api/resource/Custom DocPerm", params=params
+        )
+        return response.json()
+
+    async def create_custom_permission(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Create a new Custom DocPerm record."""
+        response = await self._request(
+            "POST", "/api/resource/Custom DocPerm", json_body=data
+        )
+        return response.json()
+
+    async def update_custom_permission(
+        self, name: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update a Custom DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        response = await self._request(
+            "PUT", f"/api/resource/Custom DocPerm/{encoded}", json_body=data
+        )
+        return response.json()
+
+    async def delete_custom_permission(self, name: str) -> None:
+        """Delete a Custom DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        await self._request("DELETE", f"/api/resource/Custom DocPerm/{encoded}")
+
     async def log_permission_change(
         self,
         action: str,
