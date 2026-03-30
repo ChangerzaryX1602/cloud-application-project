@@ -197,6 +197,10 @@ docker compose \
 ## Step 8: Start Platform & DevOps services
 
 ```bash
+docker rm -f erpnext-redis erpnext-configurator erpnext-backend erpnext-frontend erpnext-websocket erpnext-queue-short erpnext-queue-long erpnext-scheduler
+```
+
+```bash
 docker compose \
   -f docker-compose.yml \
   -f overrides/compose.erpnext.yaml \
