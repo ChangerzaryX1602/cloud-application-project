@@ -144,8 +144,8 @@ The Platform console uses ERPNext OAuth2 for login. You must register it as a cl
    | App Name | `Platform DevOps` |
    | Client ID | *(auto-generated — copy this)* |
    | Client Secret | *(auto-generated — copy this)* |
-   | Redirect URIs | `https://platform.mysterchat.com/callback` |
-   | Default Redirect URI | `https://platform.mysterchat.com/callback` |
+   | Redirect URIs | `http://localhost:3000/callback` |
+   | Default Redirect URI | `http://localhost:3000/callback` |
    | Grant Type | `Authorization Code` |
    | Response Type | `Code` |
    | Skip Authorization | ✓ checked |
