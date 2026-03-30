@@ -365,8 +365,7 @@ class ERPNextClient:
         """List ERPNext Activity Log documents."""
         params: dict[str, Any] = {
             "fields": json.dumps([
-                "name", "user", "subject", "reference_doctype",
-                "reference_name", "creation", "ip_address",
+                "name", "user", "subject", "operation", "creation",
             ]),
             "limit_page_length": limit,
             "limit_start": start,

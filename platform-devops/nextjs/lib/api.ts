@@ -78,6 +78,12 @@ export const usersApi = {
       { method: 'DELETE' },
       token
     ),
+  enable: (email: string, token: string) =>
+    fetchApi<User>(
+      `/users/${encodeURIComponent(email)}`,
+      { method: 'PUT', body: JSON.stringify({ enabled: 1 }) },
+      token
+    ),
 }
 
 // Roles
