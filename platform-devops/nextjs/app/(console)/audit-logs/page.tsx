@@ -110,8 +110,6 @@ export default function AuditLogsPage() {
       new Date(log.creation).toISOString(),
       log.user,
       log.operation,
-      log.reference_doctype,
-      log.reference_name,
     ])
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
