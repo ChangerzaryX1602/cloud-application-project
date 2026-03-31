@@ -297,3 +297,5 @@ sudo rm -rf data/erpnext/ data/postgres/
 ```
 
 Then follow the guide from **Step 3** again.
+
+TESTTTTT
