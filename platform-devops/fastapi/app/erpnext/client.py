@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import urllib.parse
 from typing import Any
@@ -221,13 +222,28 @@ class ERPNextClient:
         return response.json()
 
     async def list_role_profiles(self) -> dict[str, Any]:
-        """List all ERPNext Role Profile documents."""
-        response = await self._request(
+        """List all ERPNext Role Profile documents with their roles child table."""
+        list_response = await self._request(
             "GET",
             "/api/resource/Role Profile",
             params={"limit_page_length": 200},
         )
-        return response.json()
+        names: list[str] = [
+            item.get("name", "")
+            for item in list_response.json().get("data", [])
+            if item.get("name")
+        ]
+
+        async def _fetch_one(name: str) -> dict[str, Any]:
+            encoded = urllib.parse.quote(name, safe="")
+            try:
+                r = await self._request("GET", f"/api/resource/Role Profile/{encoded}")
+                return r.json().get("data", {"name": name, "roles": []})
+            except Exception:
+                return {"name": name, "roles": []}
+
+        profiles = await asyncio.gather(*[_fetch_one(n) for n in names])
+        return {"data": list(profiles)}
 
     async def create_role_profile(self, data: dict[str, Any]) -> dict[str, Any]:
         """Create a new ERPNext Role Profile document."""
@@ -295,6 +311,63 @@ class ERPNextClient:
         """Delete a DocPerm record."""
         encoded = urllib.parse.quote(name, safe="")
         await self._request("DELETE", f"/api/resource/DocPerm/{encoded}")
+
+    # ------------------------------------------------------------------
+    # Permissions (Custom DocPerm)
+    # ------------------------------------------------------------------
+
+    async def list_custom_permissions(
+        self,
+        doctype: str | None = None,
+        role: str | None = None,
+        limit: int = 50,
+        start: int = 0,
+    ) -> dict[str, Any]:
+        """List ERPNext Custom DocPerm records."""
+        params: dict[str, Any] = {
+            "fields": json.dumps([
+                "name", "parent", "role", "permlevel",
+                "read", "write", "create", "delete",
+                "submit", "cancel", "amend",
+            ]),
+            "limit_page_length": limit,
+            "limit_start": start,
+            "order_by": "parent asc, role asc",
+        }
+        filters: list[list[str]] = []
+        if doctype:
+            filters.append(["Custom DocPerm", "parent", "=", doctype])
+        if role:
+            filters.append(["Custom DocPerm", "role", "=", role])
+        if filters:
+            params["filters"] = json.dumps(filters)
+
+        response = await self._request(
+            "GET", "/api/resource/Custom DocPerm", params=params
+        )
+        return response.json()
+
+    async def create_custom_permission(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Create a new Custom DocPerm record."""
+        response = await self._request(
+            "POST", "/api/resource/Custom DocPerm", json_body=data
+        )
+        return response.json()
+
+    async def update_custom_permission(
+        self, name: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update a Custom DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        response = await self._request(
+            "PUT", f"/api/resource/Custom DocPerm/{encoded}", json_body=data
+        )
+        return response.json()
+
+    async def delete_custom_permission(self, name: str) -> None:
+        """Delete a Custom DocPerm record."""
+        encoded = urllib.parse.quote(name, safe="")
+        await self._request("DELETE", f"/api/resource/Custom DocPerm/{encoded}")
 
     async def log_permission_change(
         self,
@@ -365,8 +438,7 @@ class ERPNextClient:
         """List ERPNext Activity Log documents."""
         params: dict[str, Any] = {
             "fields": json.dumps([
-                "name", "user", "subject", "reference_doctype",
-                "reference_name", "creation", "ip_address",
+                "name", "user", "subject", "operation", "creation",
             ]),
             "limit_page_length": limit,
             "limit_start": start,

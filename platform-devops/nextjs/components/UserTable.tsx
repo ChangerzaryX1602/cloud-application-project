@@ -8,10 +8,11 @@ interface Props {
   users: User[]
   onView: (email: string) => void
   onDisable: (email: string) => void
+  onEnable: (email: string) => void
   loading?: boolean
 }
 
-export function UserTable({ users, onView, onDisable, loading }: Props) {
+export function UserTable({ users, onView, onDisable, onEnable, loading }: Props) {
   if (loading) {
     return (
       <div className="w-full">
@@ -93,13 +94,21 @@ export function UserTable({ users, onView, onDisable, loading }: Props) {
                   <Button size="sm" variant="outline" onClick={() => onView(user.email)}>
                     View
                   </Button>
-                  {user.enabled && (
+                  {user.enabled ? (
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => onDisable(user.email)}
                     >
                       Disable
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEnable(user.email)}
+                    >
+                      Enable
                     </Button>
                   )}
                 </div>

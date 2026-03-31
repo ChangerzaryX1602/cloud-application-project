@@ -62,7 +62,7 @@ async def list_roles() -> RoleListResponse:
 
 
 @router.get(
-    "/profiles",
+    "/profiles/",
     response_model=RoleProfileListResponse,
     summary="List all role profiles",
 )
@@ -74,7 +74,7 @@ async def list_role_profiles() -> RoleProfileListResponse:
 
 
 @router.post(
-    "/profiles",
+    "/profiles/",
     response_model=RoleProfileResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a role profile",
@@ -93,7 +93,7 @@ async def create_role_profile(body: RoleProfileCreate) -> RoleProfileResponse:
 
 
 @router.put(
-    "/profiles/{name:path}",
+    "/profiles/{name:path}/",
     response_model=RoleProfileResponse,
     summary="Update a role profile",
     dependencies=[Depends(require_role("System Manager"))],

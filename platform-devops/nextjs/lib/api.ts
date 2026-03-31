@@ -78,6 +78,12 @@ export const usersApi = {
       { method: 'DELETE' },
       token
     ),
+  enable: (email: string, token: string) =>
+    fetchApi<User>(
+      `/users/${encodeURIComponent(email)}`,
+      { method: 'PUT', body: JSON.stringify({ enabled: 1 }) },
+      token
+    ),
 }
 
 // Roles
@@ -93,7 +99,7 @@ export const rolesApi = {
     ),
   updateProfile: (name: string, data: { roles: string[] }, token: string) =>
     fetchApi<RoleProfile>(
-      `/roles/profiles/${encodeURIComponent(name)}`,
+      `/roles/profiles/${encodeURIComponent(name)}/`,
       { method: 'PUT', body: JSON.stringify(data) },
       token
     ),

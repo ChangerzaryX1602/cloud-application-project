@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -47,7 +48,7 @@ async def list_permissions(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
 ) -> PermissionListResponse:
-    result = await erpnext_client.list_permissions(
+    result = await erpnext_client.list_custom_permissions(
         doctype=doctype or None,
         role=role or None,
         limit=page_size,
@@ -71,10 +72,8 @@ async def create_permission(
     current_user: dict[str, Any] = Depends(require_role("System Manager")),
 ) -> PermissionResponse:
     payload: dict[str, Any] = {
-        "doctype": "DocPerm",
+        "doctype": "Custom DocPerm",
         "parent": body.doctype,
-        "parenttype": "DocType",
-        "parentfield": "permissions",
         "role": body.role,
         "permlevel": body.permlevel,
         "read": int(body.read),
@@ -85,7 +84,7 @@ async def create_permission(
         "cancel": int(body.cancel),
         "amend": int(body.amend),
     }
-    result = await erpnext_client.create_permission(payload)
+    result = await erpnext_client.create_custom_permission(payload)
     perm = _normalize(result)
     await erpnext_client.log_permission_change(
         action="Created",
@@ -116,7 +115,29 @@ async def update_permission(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="No fields to update",
         )
-    result = await erpnext_client.update_permission(name, payload)
+    try:
+        result = await erpnext_client.update_custom_permission(name, payload)
+    except httpx.HTTPStatusError as exc:
+        detail = f"Failed to update custom permission '{name}'"
+        try:
+            err = exc.response.json()
+            if isinstance(err, dict):
+                detail = (
+                    err.get("exception")
+                    or err.get("_error_message")
+                    or err.get("message")
+                    or detail
+                )
+        except Exception:
+            if exc.response.text:
+                detail = exc.response.text[:500]
+        raise HTTPException(status_code=exc.response.status_code, detail=detail) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Cannot reach ERPNext service",
+        ) from exc
+
     perm = _normalize(result)
     await erpnext_client.log_permission_change(
         action="Updated",
@@ -137,12 +158,12 @@ async def delete_permission(
     name: str,
     current_user: dict[str, Any] = Depends(require_role("System Manager")),
 ) -> dict[str, str]:
-    # Fetch the record first so we can log doctype/role before deleting
-    existing = await erpnext_client.list_permissions()
+    # Fetch the custom record first so we can log doctype/role before deleting
+    existing = await erpnext_client.list_custom_permissions()
     perm_doc = next(
         (r for r in existing.get("data", []) if r.get("name") == name), {}
     )
-    await erpnext_client.delete_permission(name)
+    await erpnext_client.delete_custom_permission(name)
     await erpnext_client.log_permission_change(
         action="Deleted",
         perm_name=name,

@@ -51,6 +51,17 @@ export default function UsersPage() {
     fetchUsers()
   }, [fetchUsers])
 
+  async function handleEnable(email: string) {
+    if (!token) return
+    if (!confirm(`Enable user ${email}?`)) return
+    try {
+      await usersApi.enable(email, token)
+      fetchUsers()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to enable user')
+    }
+  }
+
   async function handleDisable(email: string) {
     if (!token) return
     if (!confirm(`Disable user ${email}?`)) return
@@ -114,6 +125,7 @@ export default function UsersPage() {
         loading={loading}
         onView={email => router.push(`/users/${encodeURIComponent(email)}`)}
         onDisable={handleDisable}
+        onEnable={handleEnable}
       />
 
       {/* Pagination */}

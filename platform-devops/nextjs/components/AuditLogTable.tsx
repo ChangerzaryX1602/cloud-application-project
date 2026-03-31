@@ -42,12 +42,6 @@ export function AuditLogTable({ logs, loading }: Props) {
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
               Operation
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              DocType
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Document
-            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -71,12 +65,6 @@ export function AuditLogTable({ logs, loading }: Props) {
                 >
                   {log.operation}
                 </span>
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                {log.reference_doctype}
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
-                {log.reference_name}
               </td>
             </tr>
           ))}

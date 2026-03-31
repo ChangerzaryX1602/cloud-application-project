@@ -24,8 +24,6 @@ def _normalize_log(raw: dict[str, Any]) -> AuditLogResponse:
         user=raw.get("user"),
         # For general logs use subject; for permission logs use operation field directly
         operation=raw.get("operation") or raw.get("subject"),
-        reference_doctype=raw.get("reference_doctype"),
-        reference_name=raw.get("reference_name"),
         creation=raw.get("creation"),
     )
 
